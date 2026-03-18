@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>غربال اليقين - رحلة الـ 50 فخاً فكرياً</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #05070a;
+            --card-bg: #0f141e;
+            --accent-indigo: #6366f1;
+            --neon-green: #10b981;
+            --crimson: #ef4444;
+        }
+
+        body {
+            font-family: 'Noto Sans Arabic', sans-serif;
+            background-color: var(--bg-deep);
+            color: #e2e8f0;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            scroll-behavior: smooth;
+        }
+
+        .glass-panel {
+            background: rgba(15, 20, 30, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .elasticity-track {
+            height: 14px;
+            background: #1a1f2e;
+            border-radius: 50px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        #elasticity-fill {
+            height: 100%;
+            border-radius: 50px;
+            background: linear-gradient(90deg, #6366f1, #10b981);
+            transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .elasticity-glow {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background: #10b981;
+            filter: blur(10px);
+            border-radius: 50%;
+        }
+
+        .option-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            cursor: pointer;
+            text-align: right;
+        }
+
+        .option-card:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .correct-choice {
+            background: rgba(16, 185, 129, 0.1) !important;
+            border-color: var(--neon-green) !important;
+            color: var(--neon-green) !important;
+        }
+
+        .wrong-choice {
+            background: rgba(239, 68, 68, 0.1) !important;
+            border-color: var(--crimson) !important;
+            color: var(--crimson) !important;
+        }
+
+        .hidden-element { display: none; }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        button:disabled { cursor: not-allowed; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <!-- App Container -->
+    <div id="game-app" class="max-w-3xl w-full space-y-6">
+        
+        <!-- Top Stats -->
+        <div class="flex flex-col space-y-4">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h1 class="text-3xl font-black text-white tracking-tight">غِربال اليقين</h1>
+                    <p id="progress-text" class="text-indigo-400 text-sm font-bold opacity-80 uppercase tracking-widest">المرحلة 1 من 50</p>
+                </div>
+                <div class="text-right">
+                    <span id="elasticity-percent" class="text-2xl font-bold text-emerald-400">50%</span>
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-tighter">مرونة العقل</p>
+                </div>
+            </div>
+            
+            <div class="elasticity-track">
+                <div id="elasticity-fill" style="width: 50%;">
+                    <div class="elasticity-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Interaction Area -->
+        <main id="main-card" class="glass-panel p-8 md:p-12 rounded-[2.5rem] relative overflow-hidden">
+            <div id="quiz-view" class="fade-in">
+                <!-- Bias Header -->
+                <div class="flex items-center space-x-3 space-x-reverse mb-6">
+                    <span id="bias-type" class="bg-indigo-500/10 text-indigo-400 px-4 py-1 rounded-full text-xs font-bold border border-indigo-500/20"></span>
+                </div>
+
+                <!-- Scenario -->
+                <h2 id="scenario-text" class="text-2xl md:text-3xl font-bold text-white mb-10 leading-[1.6]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-4">
+                    <!-- Dynamic Buttons -->
+                </div>
+            </div>
+
+            <!-- Feedback Area -->
+            <div id="feedback-view" class="hidden-element mt-8 pt-8 border-t border-white/5 fade-in">
+                <div class="flex items-start space-x-4 space-x-reverse">
+                    <div id="feedback-icon" class="mt-1 flex-shrink-0"></div>
+                    <div>
+                        <h3 id="feedback-title" class="text-xl font-bold mb-2"></h3>
+                        <p id="explanation-text" class="text-slate-400 text-lg leading-relaxed"></p>
+                    </div>
+                </div>
+                <button id="next-btn" onclick="handleNext()" class="mt-10 w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-xl transition-all shadow-lg shadow-indigo-500/20">
+                    استمر في الغربلة
+                </button>
+            </div>
+        </main>
+
+        <footer class="text-center text-slate-600 text-xs font-medium pt-4 opacity-50">
+            تمت برمجة 50 سيناريو فكري لتغطية كافة أشكال الانحيازات الإدراكية.
+        </footer>
+    </div>
+
+    <script>
+        const biasData = [
+            { type: "انحياز التأكيد", scenario: "أنت تؤمن بشدة أن 'القراءة الورقية' أعمق أثراً. كيف تثبت مرونة عقلك؟", options: [{ text: "تقرأ مقالاً عن فوائد الملمس الورقي.", correct: false }, { text: "تبحث عن دراسة تثبت عدم وجود فرق في الاستيعاب.", correct: true }], explanation: "المرونة هي البحث عن 'الدليل النافي'." },
+            { type: "انحياز النجاة", scenario: "ناجحون تركوا تعليمهم الجامعي. ما هي المعلومة التي تمثل الغربال؟", options: [{ text: "تحليل آلاف الفاشلين الذين تركوا الدراسة.", correct: true }, { text: "دراسة عادات الناجحين اليومية.", correct: false }], explanation: "الحقيقة تكمن في دراسة 'المقبرة' لا 'المنصة'." },
+            { type: "تأثير الهالة", scenario: "طبيب مشهور ووسيم يقدم نصيحة في الاقتصاد. لماذا قد يخدعك عقلك؟", options: [{ text: "لأن نجاحه الطبي يعطي انطباعاً بكفاءة شاملة.", correct: false }, { text: "لأنني سأفصل بين وسامته وحجته الاقتصادية.", correct: true }], explanation: "تأثير الهالة يفيض بسمة إيجابية واحدة على كل شيء." },
+            { type: "انحياز التوافر", scenario: "سمعت عن سرقة قريبة وقررت شراء نظام أمان باهظ. هل هذا قرار مرن؟", options: [{ text: "نعم، الحادثة قريبة وواضحة.", correct: false }, { text: "لا، يجب مراجعة معدلات الجريمة الإحصائية.", correct: true }], explanation: "العقل يبالغ في تقدير الأحداث سهلة التذكر." },
+            { type: "تأثير دانينغ-كروجر", scenario: "قرأت كتاباً واحداً عن الفلسفة وشعرت بقدرتك على نقد العظماء. ماذا تفعل؟", options: [{ text: "تبدأ بكتابة مقالات نقدية فوراً.", correct: false }, { text: "تبحث عن خريطة المعرفة لتعرف حدود جهلك.", correct: true }], explanation: "المبتدئون يبالغون في تقدير معرفتهم لنقص الخبرة." },
+            { type: "التكلفة الغارقة", scenario: "أنت في فيلم ممل ودفعت التذكرة. ما هو القرار العاقل؟", options: [{ text: "إكمال الفيلم كي لا تضيع الأموال.", correct: false }, { text: "المغادرة فوراً لإنقاذ وقتك.", correct: true }], explanation: "المال ضاع في الحالتين، لا تضف خسارة الوقت." },
+            { type: "انحياز الحداثة", scenario: "هبطت الأسهم اليوم والجميع يبيع. ما هو التصرف المرن؟", options: [{ text: "البيع فوراً لأن الهبوط هو أحدث مؤشر.", correct: false }, { text: "دراسة أداء السهم في السنوات الخمس الأخيرة.", correct: true }], explanation: "الأحداث الأخيرة ليست دائماً الأهم." },
+            { type: "تأثير العربة", scenario: "أصدقاؤك استثمروا في عملة رقمية جديدة. ماذا تفعل؟", options: [{ text: "تستثمر معهم، فالجميع يفعل ذلك.", correct: false }, { text: "تدرس المشروع بشكل مستقل تماماً.", correct: true }], explanation: "الإجماع لا يعني بالضرورة الصحة." },
+            { type: "خطأ العزو الأساسي", scenario: "زميل يصرخ في موظف. ما هو استنتاجك التلقائي؟", options: [{ text: "هذا الشخص عدواني بطبعه.", correct: false }, { text: "ربما يمر بظرف عصيب اليوم.", correct: true }], explanation: "نحن ننسب أخطاء الآخرين لشخصياتهم وأخطاءنا للظروف." },
+            { type: "انحياز البقعة العمياء", scenario: "تشعر أنك أصبحت محصناً ضد الانحيازات بينما الآخرون ضحايا. كيف تغربل هذا؟", options: [{ text: "الثقة بمعرفتك النظرية.", correct: false }, { text: "الاعتراف بأن الوعي لا يمنع ممارسة الانحياز لاإرادياً.", correct: true }], explanation: "أخطر انحياز هو الاعتقاد بأنك 'أقل انحيازاً'." },
+            { type: "انحياز التفاؤل", scenario: "تتوقع أرباحاً لمشروعك في شهرين رغم أن المعدل سنة. ماذا تفعل؟", options: [{ text: "تثق في حماسك الاستثنائي.", correct: false }, { text: "تضع خطة طوارئ تفترض الأسوأ.", correct: true }], explanation: "نحن نميل للاعتقاد بأننا استثناء من الفشل." },
+            { type: "تأثير الاستعراض", scenario: "البقعة الصغيرة على قميصك تجعلك تشعر بمراقبة الجميع. كيف تهدأ؟", options: [{ text: "البقاء منعزلاً لتجنب الإحراج.", correct: false }, { text: "تذكير نفسك أن الناس مشغولون بأنفسهم.", correct: true }], explanation: "لسنا مركز الكون في أعين الآخرين كما نتخيل." },
+            { type: "انحياز السلطة", scenario: "بروفيسور فيزياء يتحدث عن العلاقات العاطفية. كيف تقيم رأيه؟", options: [{ text: "بما أنه عالم، فرأيه موزون.", correct: false }, { text: "بما أنه خارج تخصصصه، فرأيه كأي رأي عادي.", correct: true }], explanation: "السلطة في مجال لا تعني الكفاءة في كل المجالات." },
+            { type: "تأثير الهياكل (Framing)", scenario: "عملية نجاحها 90% أم فشلها 10%؟", options: [{ text: "تختار الـ 90% نجاح لأنها تبدو أأمن.", correct: false }, { text: "تدرك أنهما متطابقان وتفحص الجوهر.", correct: true }], explanation: "الصياغة تتلاعب بقراراتنا." },
+            { type: "الفجوة العاطفية", scenario: "تخطط لنظام غذائي وأنت شبعان. ماذا تفعل؟", options: [{ text: "تضع جدولاً صارماً جداً.", correct: false }, { text: "تتوقع لحظات الجوع وضعف الإرادة.", correct: true }], explanation: "نحن لا نتوقع قراراتنا حين تتغير حالتنا العاطفية." },
+            { type: "انحياز الحنين", scenario: "تعتقد أن 'جيل الطيبين' كان أفضل أخلاقياً. كيف تفلتر هذا؟", options: [{ text: "مشاهدة أخبار الأزمات الحالية.", correct: false }, { text: "مراجعة إحصائيات جودة الحياة والتعليم تاريخياً.", correct: true }], explanation: "العقل يصفي ذكريات الماضي من شوائبها." },
+            { type: "المعرفة المتأخرة", scenario: "بعد خسارة فريقك قلت: 'كنت أعرف!'. هل كنت تعرف؟", options: [{ text: "نعم، المؤشرات كانت واضحة.", correct: false }, { text: "لا، هذا وهم إعادة بناء الماضي.", correct: true }], explanation: "العقل يجعل الماضي يبدو متوقعاً بعد وقوعه." },
+            { type: "انحياز التعقيد", scenario: "تفسير بسيط وآخر معقد وغامض لظاهرة. أيهما تختار؟", options: [{ text: "المعقد، لأنه يبدو أعمق.", correct: false }, { text: "البسيط، تطبيقاً لنصل أوكام.", correct: true }], explanation: "العمق لا يتطلب التعقيد دائماً." },
+            { type: "انحياز العدالة", scenario: "رأيت فقيراً فقلت: 'أكيد كسلان'. لماذا هذا التفكير؟", options: [{ text: "لأن العالم عادل وكلٌ ينال جزاءه.", correct: false }, { text: "لأنني أتجاهل العوامل العشوائية والبيئية.", correct: true }], explanation: "نريد تصديق عدالة العالم لنشعر بالسيطرة." },
+            { type: "التمركز حول الذات", scenario: "تشعر أنك قمت بـ 80% من العمل الجماعي. كيف تتأكد؟", options: [{ text: "المطالبة بتقدير أكبر.", correct: false }, { text: "سؤال الآخرين عن مساهماتهم بإنصاف.", correct: true }], explanation: "نحن نبالغ في تقدير مجهودنا لغياب تفاصيل مجهود غيرنا." },
+            { type: "انحياز الأثر الجمالي", scenario: "شخص جميل يتحدث بلباقة عن نظرية مؤامرة. هل تصدقه؟", options: [{ text: "نعم، ثقته وجماله يعطيان مصداقية.", correct: false }, { text: "لا، الجمال لا علاقة له بصحة المعلومة.", correct: true }], explanation: "الجمال الخارجي يخدع الحكم المنطقي." },
+            { type: "انحياز المعالجة المتوازية", scenario: "تعتقد أنك قادر على العمل بتركيز أثناء مشاهدة مسلسل. هل هذا صحيح؟", options: [{ text: "نعم، عقلي معتاد على تعدد المهام.", correct: false }, { text: "لا، العقل يبدل بين المهام ويفقد الجودة.", correct: true }], explanation: "تعدد المهام وهم يقلل الكفاءة الذهنية." },
+            { type: "انحياز الوفرة", scenario: "محل يقدم 50 نوع مربى وآخر يقدم 3 أنواع. أين ستشتري أسرع؟", options: [{ text: "صاحب الـ 50 نوعاً، الخيارات أفضل.", correct: false }, { text: "صاحب الـ 3 أنواع، الاختيار أسهل.", correct: true }], explanation: "كثرة الخيارات تسبب شلل القرار." },
+            { type: "انحياز المكانة", scenario: "تشتري هاتفاً غالياً جداً لست بحاجة لمميزاته. لماذا؟", options: [{ text: "لأنه الأفضل تقنياً بلا شك.", correct: false }, { text: "لأنه يمنحني شعوراً بالتميز الاجتماعي.", correct: true }], explanation: "القرارات الاستهلاكية غالباً ما تكون نفسية لا وظيفية." },
+            { type: "انحياز الإرساء (Anchoring)", scenario: "قميص سعره 1000 ريال، ثم خُفض لـ 200. هل هو صفقة؟", options: [{ text: "نعم، وفرت 800 ريال.", correct: false }, { text: "ليس بالضرورة، الـ 1000 كانت مرساة وهمية.", correct: true }], explanation: "السعر الأول يربط حكمنا على القيمة لاحقاً." },
+            { type: "انحياز الابتكار", scenario: "كل شيء جديد هو بالضرورة أفضل من القديم. هل توافق؟", options: [{ text: "نعم، التطور لا يتوقف.", correct: false }, { text: "لا، الجديد قد يحمل عيوباً لم تظهر بعد.", correct: true }], explanation: "هوس الجديد يغفل عن استقرار القديم المجرب." },
+            { type: "تأثير بن فرانكلين", scenario: "تريد أن يحبك شخص لا يطيقك. ماذا تفعل؟", options: [{ text: "تقدم له خدمة كبيرة ومفاجئة.", correct: false }, { text: "تطلب منه خدمة بسيطة جداً.", correct: true }], explanation: "عندما يقدم لنا شخص خدمة، يبرر عقله ذلك بأنه يحبنا." },
+            { type: "انحياز القصة", scenario: "تصدق قصة درامية عن نجاح شخص أكثر من الإحصائيات. لماذا؟", options: [{ text: "لأن القصص تعبر عن الحقيقة الإنسانية.", correct: false }, { text: "لأن العقل مبرمج للتعلق بالدراما لا الأرقام.", correct: true }], explanation: "القصص جذابة لكنها ليست تمثيلاً إحصائياً للواقع." },
+            { type: "انحياز المجموع الصفر", scenario: "تعتقد أن ربح غيرك هو بالضرورة خسارة لك. هل هذا صحيح؟", options: [{ text: "نعم، الموارد في العالم محدودة.", correct: false }, { text: "لا، هناك علاقات ربح-ربح تنمي الجميع.", correct: true }], explanation: "النجاح ليس كعكة ثابتة الحجم." },
+            { type: "انحياز العواقب", scenario: "تقييم قرارك بناءً على النتيجة فقط وليس جودة التفكير وقتها. هل هذا عدل؟", options: [{ text: "نعم، النتيجة هي كل ما يهم.", correct: false }, { text: "لا، النتيجة قد تتأثر بالحظ؛ التفكير هو ما نقيمه.", correct: true }], explanation: "قرار جيد قد يؤدي لنتيجة سيئة بالصدفة." },
+            { type: "انحياز العمى التغييري", scenario: "هل تلاحظ التغيرات التدريجية في سلوك صديقك المقرب؟", options: [{ text: "نعم، أنا دقيق الملاحظة.", correct: false }, { text: "غالباً لا، العقل يميل لتثبيت الصورة الذهنية القديمة.", correct: true }], explanation: "نحن نغفل عن التغيرات البطيئة والتدريجية." },
+            { type: "انحياز الجماعة", scenario: "تدافع عن خطأ ارتكبه شخص من قبيلتك أو ناديك. لماذا؟", options: [{ text: "لأن الولاء أهم من المنطق المجرد.", correct: false }, { text: "لأن انحياز 'نحن ضدهم' يعمي البصيرة.", correct: true }], explanation: "الانتماء يضغط على معايير العدالة لدينا." },
+            { type: "انحياز المعلومات", scenario: "تجمع معلومات أكثر وأكثر قبل قرار بسيط جداً. هل هذا مفيد؟", options: [{ text: "نعم، المعرفة قوة.", correct: false }, { text: "لا، المعلومات الزائدة تشوش القرار ولا تحسنه.", correct: true }], explanation: "المعلومات التي لا تغير القرار هي ضجيج." },
+            { type: "انحياز السلبية", scenario: "تتذكر نقداً واحداً جارحاً وتنسى 10 مديحات. لماذا؟", options: [{ text: "لأنني شخص حساس بطبعه.", correct: false }, { text: "لأن الدماغ مبرمج لإعطاء الأولوية للتهديدات.", correct: true }], explanation: "الأخبار السيئة تلتصق بالعقل أكثر من الجيدة." },
+            { type: "انحياز التحقق اللاحق", scenario: "تشتري منتجاً ثم تبدأ بالبحث عن مراجعات تمدحه. لماذا؟", options: [{ text: "لأعرف كيف أستخدمه بشكل أفضل.", correct: false }, { text: "لأبرر لنفسي صحة قرار الشراء وأتخلص من الندم.", correct: true }], explanation: "نحن نبحث عن راحة البال بعد القرار." },
+            { type: "انحياز الوهم المالي", scenario: "تفضل زيادة راتب 5% مع تضخم 10%، على بقاء راتبك مع تضخم 0%. لماذا؟", options: [{ text: "لأن الأرقام الكبيرة تجعلني أشعر بالثراء.", correct: false }, { text: "لأنني أركز على القيمة الاسمية لا القدرة الشرائية.", correct: true }], explanation: "العقل يخدع بالزيادات الرقمية الوهمية." },
+            { type: "انحياز تجنب الخسارة", scenario: "تخاف من خسارة 100 ريال أكثر من فرحك بربح 100 ريال. لماذا؟", options: [{ text: "لأن المال عزيز.", correct: false }, { text: "لأن وقع الخسارة نفسياً ضعف وقع الربح.", correct: true }], explanation: "الخوف من الخسارة يحركنا أكثر من الرغبة في الربح." },
+            { type: "انحياز الصورة النمطية", scenario: "تفترض أن كل مبرمج هو شخص انطوائي يحب البيتزا. هل هذا منطقي؟", options: [{ text: "نعم، الأنماط لا تأتي من فراغ.", correct: false }, { text: "لا، التعميم يلغي الفردية والواقع المتنوع.", correct: true }], explanation: "الأنماط اختصارات ذهنية مضللة." },
+            { type: "انحياز المقاومة", scenario: "ترفض فكرة جديدة فقط لأنها جاءت من شخص تختلف معه سياسياً. ماذا تسمي هذا؟", options: [{ text: "ثبات على المبدأ.", correct: false }, { text: "انحياز المقاومة الذي يغلق باب التعلم.", correct: true }], explanation: "الفكرة تُقيم بذاتها لا بمصدرها." },
+            { type: "انحياز التبسيط المفرط", scenario: "تظن أن حل مشكلة الاقتصاد هو 'طبع المزيد من الأموال'. لماذا هذا خطر؟", options: [{ text: "لأنه حل عبقري وبسيط.", correct: false }, { text: "لأنه يتجاهل تعقيدات المنظومة والتبعات الكارثية.", correct: true }], explanation: "المشاكل المعقدة ليس لها حلول سحرية بسيطة." },
+            { type: "انحياز الرغبة", scenario: "تصدق خبراً كاذباً لأنه يدعم أمنيتك في فوز مرشح معين. ماذا تفعل؟", options: [{ text: "تنشره فوراً لتوعية الناس.", correct: false }, { text: "تتحقق من المصدر خاصة وأنه يوافق هواك.", correct: true }], explanation: "نحن نصدق ما نريد أن يكون حقيقة." },
+            { type: "انحياز الثبات الوظيفي", scenario: "تستخدم المطرقة فقط لضرب المسامير ولا تفكر في استخدامها كوزن لورقك. لماذا؟", options: [{ text: "لأن كل أداة لها وظيفة واحدة.", correct: false }, { text: "لأن عقلي محبوس في الاستخدام التقليدي للأشياء.", correct: true }], explanation: "الإبداع يتطلب رؤية الوظائف غير التقليدية." },
+            { type: "انحياز القرب الإقليمي", scenario: "تهتم بخبر وفاة شخص في شارعك أكثر من وفاة 1000 شخص في قارة أخرى. هل هذا أخلاقي؟", options: [{ text: "نعم، الأقربون أولى بالمعروف.", correct: false }, { text: "هو رد فعل بيولوجي لكنه يفتقر للعدالة الإنسانية الشاملة.", correct: true }], explanation: "المسافة الجغرافية تؤثر على عمق تعاطفنا." },
+            { type: "انحياز التخطيط", scenario: "تظن أن كتابة بحثك ستستغرق ساعتين وهي استغرقت 10 ساعات. لماذا تتكرر هذه الغلطة؟", options: [{ text: "بسبب ظروف طارئة دائماً.", correct: false }, { text: "بسبب الميل الدائم لتقدير الوقت بأفضل السيناريوهات.", correct: true }], explanation: "نحن نفشل في تقدير الوقت الفعلي للمهام المعقدة." },
+            { type: "انحياز الاستقراء الناقص", scenario: "رأيت 3 بجعات بيضاء فاستنتجت أن كل البجع أبيض. هل استنتاجك نهائي؟", options: [{ text: "نعم، هذا هو المنطق التجريبي.", correct: false }, { text: "لا، بجعة سوداء واحدة تكفي لهدم استنتاجك.", correct: true }], explanation: "التعميم بناءً على مشاهدات محدودة فخ منطقي." },
+            { type: "انحياز الثقة المفرطة", scenario: "تثق في قدرتك على القيادة وأنت مخمور أو مرهق جداً. لماذا؟", options: [{ text: "لأنني سائق محترف.", correct: false }, { text: "بسبب وهم السيطرة الذي يعمي عن المخاطر الحقيقية.", correct: true }], explanation: "الثقة الزائدة هي السبب الأول للحوادث." },
+            { type: "انحياز المصطلحات", scenario: "تصدق خبراً لأن فيه كلمات مثل 'كمومي' و'نانوي' دون فهمها. لماذا؟", options: [{ text: "لأنها تدل على علم حديث وجاد.", correct: false }, { text: "لأن المصطلحات الرنانة تعطي هيبة وهمية للمحتوى.", correct: true }], explanation: "العلم الحقيقي يمكن تبسيطه دون غموض." },
+            { type: "انحياز الذاكرة الانتقائية", scenario: "تتذكر فقط المرات التي صدق فيها حدسك وتنسى مئات المرات التي أخطأ فيها. ماذا يسمى هذا؟", options: [{ text: "امتلاك حاسة سادسة.", correct: false }, { text: "تصفية الذاكرة لدعم صورة 'الذات الذكية'.", correct: true }], explanation: "الذاكرة ليست كاميرا، بل هي محرر متحيز." },
+            { type: "انحياز التفاؤل الدفاعي", scenario: "ترفض إجراء فحص طبي دوري خوفاً من اكتشاف مرض. هل هذا يحميك؟", options: [{ text: "نعم، 'الوقاية' من القلق أهم.", correct: false }, { text: "لا، تجاهل المشكلة لا يعني عدم وجودها.", correct: true }], explanation: "الهروب من الحقيقة يزيد من حجم الكارثة لاحقاً." },
+            { type: "انحياز التفكير الختامي", scenario: "وصلت للمرحلة 50، هل تعتقد أنك الآن 'كامل العقل'؟", options: [{ text: "نعم، لقد تعلمت كل شيء.", correct: false }, { text: "لا، الغربلة رحلة عمر لا تنتهي أبداً.", correct: true }], explanation: "التواضع المعرفي هو أعلى مراحل الذكاء." }
+        ];
+
+        let state = { currentIndex: 0, elasticity: 50, isAnswered: false, score: 0 };
+        const elements = {
+            progress: document.getElementById('progress-text'),
+            elasticityFill: document.getElementById('elasticity-fill'),
+            elasticityPercent: document.getElementById('elasticity-percent'),
+            biasType: document.getElementById('bias-type'),
+            scenario: document.getElementById('scenario-text'),
+            options: document.getElementById('options-container'),
+            feedback: document.getElementById('feedback-view'),
+            title: document.getElementById('feedback-title'),
+            explanation: document.getElementById('explanation-text'),
+            icon: document.getElementById('feedback-icon'),
+            mainCard: document.getElementById('main-card')
+        };
+
+        function initQuiz() {
+            const data = biasData[state.currentIndex];
+            state.isAnswered = false;
+            elements.progress.innerText = `المرحلة ${state.currentIndex + 1} من ${biasData.length}`;
+            elements.biasType.innerText = data.type;
+            elements.scenario.innerText = data.scenario;
+            elements.feedback.classList.add('hidden-element');
+            elements.options.innerHTML = '';
+            data.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = "option-card w-full p-6 rounded-2xl bg-white/5 text-slate-300 font-semibold text-lg leading-relaxed border border-transparent shadow-sm";
+                btn.innerText = opt.text;
+                btn.onclick = () => checkAnswer(opt, btn);
+                elements.options.appendChild(btn);
+            });
+            const view = document.getElementById('quiz-view');
+            view.classList.remove('fade-in');
+            void view.offsetWidth;
+            view.classList.add('fade-in');
+        }
+
+        function checkAnswer(option, btn) {
+            if (state.isAnswered) return;
+            state.isAnswered = true;
+            document.querySelectorAll('.option-card').forEach(b => b.disabled = true);
+            if (option.correct) {
+                btn.classList.add('correct-choice');
+                state.elasticity = Math.min(state.elasticity + 2, 100);
+                state.score++;
+                showFeedback(true);
+            } else {
+                btn.classList.add('wrong-choice');
+                state.elasticity = Math.max(state.elasticity - 2, 0);
+                showFeedback(false);
+            }
+            updateElasticityUI();
+        }
+
+        function showFeedback(isCorrect) {
+            elements.feedback.classList.remove('hidden-element');
+            elements.title.innerText = isCorrect ? "مرونة ممتازة!" : "اليقين خدعك!";
+            elements.title.className = isCorrect ? "text-xl font-bold mb-2 text-emerald-400" : "text-xl font-bold mb-2 text-rose-400";
+            elements.explanation.innerText = biasData[state.currentIndex].explanation;
+            elements.icon.innerHTML = isCorrect ? `<svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` : `<svg class="w-10 h-10 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            setTimeout(() => { elements.feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+        }
+
+        function updateElasticityUI() {
+            elements.elasticityFill.style.width = `${state.elasticity}%`;
+            elements.elasticityPercent.innerText = `${state.elasticity}%`;
+        }
+
+        function handleNext() {
+            state.currentIndex++;
+            if (state.currentIndex < biasData.length) {
+                initQuiz();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showFinalResults();
+            }
+        }
+
+        function showFinalResults() {
+            elements.mainCard.innerHTML = `
+                <div class="text-center py-10 space-y-8 fade-in">
+                    <div class="text-8xl">🏆</div>
+                    <h2 class="text-4xl font-black text-white">نهاية الغربلة</h2>
+                    <p class="text-indigo-400 font-bold">لقد أتممت 50 تدريباً ذهنياً</p>
+                    <div class="flex justify-center space-x-8 space-x-reverse">
+                        <div class="text-center">
+                            <span class="block text-3xl font-bold text-white">${state.score}/50</span>
+                            <span class="text-xs text-slate-500 font-black">الإجابات الصحيحة</span>
+                        </div>
+                        <div class="text-center border-r border-white/10 pr-8">
+                            <span class="block text-3xl font-bold text-emerald-400">${state.elasticity}%</span>
+                            <span class="text-xs text-slate-500 font-black">المرونة النهائية</span>
+                        </div>
+                    </div>
+                    <button onclick="location.reload()" class="w-full py-5 bg-white text-black font-black rounded-2xl">البدء من جديد</button>
+                </div>
+            `;
+        }
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
